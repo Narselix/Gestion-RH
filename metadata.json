@@ -1,0 +1,6 @@
+{
+  "name": "Gestion RH",
+  "description": "Application de gestion de ressources humaines avec tableau de bord et suivi de temps de travail.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
