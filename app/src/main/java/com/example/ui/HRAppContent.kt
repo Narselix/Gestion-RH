@@ -67,6 +67,10 @@ fun HRAppContent(
                         viewModel = viewModel,
                         onLoginSuccess = { }
                     )
+                    "REGISTER" -> RegisterScreen(
+                        viewModel = viewModel,
+                        onBackToLogin = { viewModel.currentScreen.value = "LOGIN" }
+                    )
                     "MAIN" -> {
                         currentUser?.let { user ->
                             MainScreen(
@@ -102,9 +106,9 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
+                Brush.radialGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                         MaterialTheme.colorScheme.background
                     )
                 )
@@ -118,40 +122,49 @@ fun LoginScreen(
                 .widthIn(max = 450.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Distinct Logo Icon Block
+            // Distinct Logo Icon Block as modern floating premium shield
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(16.dp),
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                            )
+                        )
+                    )
+                    .border(1.5.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(28.dp))
+                    .padding(18.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "RH Logo",
+                    contentDescription = "RH Security",
                     tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(44.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Brand Title / Sub-titling
             Text(
                 text = "PORTAIL RH HORIZON",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 3.sp
                 ),
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Connexion sécurisée pour les employés",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Gérez votre temps, absences et équipe en toute simplicité",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -160,12 +173,13 @@ fun LoginScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                shape = RoundedCornerShape(20.dp)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.padding(28.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
                     Text(
                         text = "Identifiez-vous",
@@ -173,21 +187,48 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
+                    // Success banner
+                    val regSuccess by viewModel.registerSuccess.collectAsStateWithLifecycle()
+                    regSuccess?.let {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFE8F5E9))
+                                .border(1.dp, Color(0xFF81C784), RoundedCornerShape(12.dp))
+                                .padding(14.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("✅  ", fontSize = 14.sp)
+                                Text(
+                                    text = it,
+                                    color = Color(0xFF2E7D32),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+
                     // Error banner
                     error?.let {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
-                                .padding(12.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.08f))
+                                .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                                .padding(14.dp)
                         ) {
-                            Text(
-                                text = it,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("⚠️  ", fontSize = 14.sp)
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
 
@@ -201,8 +242,9 @@ fun LoginScreen(
                         label = { Text("Nom d'utilisateur") },
                         placeholder = { Text("ex: thomas") },
                         singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
                         leadingIcon = {
-                            Icon(Icons.Default.Person, contentDescription = "User Icon")
+                            Icon(Icons.Default.Person, contentDescription = "User Icon", tint = MaterialTheme.colorScheme.primary)
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
@@ -210,7 +252,9 @@ fun LoginScreen(
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                            focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.02f),
+                            unfocusedContainerColor = Color.Transparent
                         )
                     )
 
@@ -224,21 +268,26 @@ fun LoginScreen(
                         label = { Text("Mot de passe") },
                         placeholder = { Text("••••••••") },
                         singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = "Lock Icon")
+                            Icon(Icons.Default.Lock, contentDescription = "Lock Icon", tint = MaterialTheme.colorScheme.primary)
                         },
                         trailingIcon = {
-                            Text(
-                                text = if (passwordVisible) "Masquer" else "Afficher",
+                            Box(
                                 modifier = Modifier
+                                    .clip(CircleShape)
                                     .clickable { passwordVisible = !passwordVisible }
-                                    .padding(end = 12.dp),
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    .padding(8.dp)
+                            ) {
+                                Text(
+                                    text = if (passwordVisible) "Masquer" else "Afficher",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
                                 )
-                            )
+                            }
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
@@ -246,11 +295,13 @@ fun LoginScreen(
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                            focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.02f),
+                            unfocusedContainerColor = Color.Transparent
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     // Connect button
                     Button(
@@ -260,9 +311,9 @@ fun LoginScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
+                            .height(54.dp)
                             .testTag("login_button"),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = CircleShape,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         enabled = !isLoading
                     ) {
@@ -273,29 +324,50 @@ fun LoginScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text(
-                                text = "Se connecter",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    letterSpacing = 0.5.sp
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Se connecter",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
                                 )
-                            )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(Icons.Default.ArrowForward, contentDescription = "S'identifier", modifier = Modifier.size(18.dp))
+                            }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    TextButton(
+                        onClick = { viewModel.currentScreen.value = "REGISTER" },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = "Nouveau ici ? Créer un profil",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // Demo Shortcut Section as useful helper chips
+            // Demo Shortcut Section as useful helper chips with elite design
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                shape = RoundedCornerShape(16.dp)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)),
+                shape = RoundedCornerShape(24.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -304,7 +376,7 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -313,14 +385,15 @@ fun LoginScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
                                 .clickable { viewModel.selectDemoUser("thomas") }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Thomas", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Text("Thomas 🧑‍💻", fontSize = 11.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                                 Text("Employé", fontSize = 9.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                             }
                         }
@@ -328,14 +401,15 @@ fun LoginScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
                                 .clickable { viewModel.selectDemoUser("sophie") }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Sophie", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Text("Sophie 💼", fontSize = 11.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                                 Text("Admin RH", fontSize = 9.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                             }
                         }
@@ -343,14 +417,15 @@ fun LoginScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
                                 .clickable { viewModel.selectDemoUser("lucas") }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Lucas", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Text("Lucas ⭐", fontSize = 11.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                                 Text("Manager", fontSize = 9.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                             }
                         }
@@ -1302,7 +1377,8 @@ fun LeavesTab(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
             ) {
                 Row(
                     modifier = Modifier.padding(24.dp),
@@ -1310,15 +1386,15 @@ fun LeavesTab(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(54.dp)
+                            .size(56.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)),
+                            .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "${user.leaveBalance}",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = "${user.leaveBalance.toInt()}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -1327,15 +1403,15 @@ fun LeavesTab(
 
                     Column {
                         Text(
-                            text = "Congés Disponibles",
-                            fontWeight = FontWeight.Bold,
+                            text = "Solde de Congés",
+                            fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium.copy(letterSpacing = 0.5.sp)
                         )
                         Text(
-                            text = "Votre solde de jours de congés payés & RTT cumulés.",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            text = "Jours restants cumulés pour congés payés & RTT",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
                         )
                     }
                 }
@@ -1347,16 +1423,16 @@ fun LeavesTab(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.dp, Color(0xFFF0F0F0)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Demander un congé / RTT",
+                        text = "Faire une nouvelle demande",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -1366,11 +1442,20 @@ fun LeavesTab(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.08f))
+                                .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
-                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("⚠️  ", fontSize = 14.sp)
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
 
@@ -1378,17 +1463,31 @@ fun LeavesTab(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF10B981).copy(alpha = 0.1f))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFE8F5E9))
+                                .border(1.dp, Color(0xFF81C784), RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
-                            Text(it, color = Color(0xFF10B981), style = MaterialTheme.typography.bodySmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("✅  ", fontSize = 14.sp)
+                                Text(
+                                    text = it,
+                                    color = Color(0xFF2E7D32),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
 
-                    // Leave Type Radio Line
+                    // Leave Type Selection
                     Column {
-                        Text("Type de congé", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = "Catégorie d'absence",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -1401,17 +1500,22 @@ fun LeavesTab(
                                         .weight(1f)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(
-                                            if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                                            if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else Color.Transparent,
+                                            RoundedCornerShape(12.dp)
                                         )
                                         .clickable { viewModel.leaveTypeSelected.value = type }
-                                        .padding(vertical = 10.dp),
+                                        .padding(vertical = 12.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = type,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -1432,9 +1536,12 @@ fun LeavesTab(
                                 .weight(1f)
                                 .testTag("leave_start_input"),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            colors = OutlinedTextFieldDefaults.colors()
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                            )
                         )
 
                         OutlinedTextField(
@@ -1446,9 +1553,12 @@ fun LeavesTab(
                                 .weight(1f)
                                 .testTag("leave_end_input"),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                            colors = OutlinedTextFieldDefaults.colors()
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                            )
                         )
                     }
 
@@ -1461,8 +1571,11 @@ fun LeavesTab(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("leave_reason_input"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors()
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                        )
                     )
 
                     Button(
@@ -1474,7 +1587,7 @@ fun LeavesTab(
                         shape = CircleShape
                     ) {
                         Icon(Icons.Default.Send, contentDescription = "Submit Leave", modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text("Envoyer la demande", fontWeight = FontWeight.Bold)
                     }
                 }
@@ -1494,12 +1607,13 @@ fun LeavesTab(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
+                            .padding(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -1890,6 +2004,399 @@ fun AdminApprovalCard(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
                 ) {
                     Text("Approuver", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RegisterScreen(
+    viewModel: HRViewModel,
+    onBackToLogin: () -> Unit
+) {
+    val username by viewModel.registerUsernameText.collectAsStateWithLifecycle()
+    val password by viewModel.registerPasswordText.collectAsStateWithLifecycle()
+    val fullName by viewModel.registerFullNameText.collectAsStateWithLifecycle()
+    val email by viewModel.registerEmailText.collectAsStateWithLifecycle()
+    val role by viewModel.registerRoleText.collectAsStateWithLifecycle()
+    val department by viewModel.registerDepartmentText.collectAsStateWithLifecycle()
+    val error by viewModel.registerError.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isRegisterLoading.collectAsStateWithLifecycle()
+
+    var passwordVisible by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            )
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 480.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Distinct Logo Icon Block as modern floating premium shield
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                            )
+                        )
+                    )
+                    .border(1.5.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(22.dp))
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "S'enregistrer",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "CRÉER UN COMPTE",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.5.sp
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Enregistrez votre nouveau profil de collaborateur",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                LazyColumn(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    item {
+                        Text(
+                            text = "Informations professionnelles",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Registration Error banner
+                    error?.let {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.08f))
+                                    .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("⚠️  ", fontSize = 14.sp)
+                                    Text(
+                                        text = it,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Full Name Input
+                    item {
+                        OutlinedTextField(
+                            value = fullName,
+                            onValueChange = { viewModel.registerFullNameText.value = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("register_fullname_input"),
+                            label = { Text("Nom complet") },
+                            placeholder = { Text("ex: Julie Dupont") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            leadingIcon = {
+                                Icon(Icons.Default.Person, contentDescription = "Nom complet", tint = MaterialTheme.colorScheme.primary)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.02f),
+                                unfocusedContainerColor = Color.Transparent
+                            )
+                        )
+                    }
+
+                    // Username Input
+                    item {
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = { viewModel.registerUsernameText.value = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("register_username_input"),
+                            label = { Text("Nom d'utilisateur") },
+                            placeholder = { Text("ex: julie") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            leadingIcon = {
+                                Icon(Icons.Default.AccountBox, contentDescription = "Utilisateur", tint = MaterialTheme.colorScheme.primary)
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.02f),
+                                unfocusedContainerColor = Color.Transparent
+                            )
+                        )
+                    }
+
+                    // Email Input
+                    item {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { viewModel.registerEmailText.value = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("register_email_input"),
+                            label = { Text("Adresse e-mail") },
+                            placeholder = { Text("ex: julie.dupont@entreprise.com") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            leadingIcon = {
+                                Icon(Icons.Default.Email, contentDescription = "Email", tint = MaterialTheme.colorScheme.primary)
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.02f),
+                                unfocusedContainerColor = Color.Transparent
+                            )
+                        )
+                    }
+
+                    // Role Selector
+                    item {
+                        Column {
+                            Text(
+                                text = "Rôle dans l'entreprise",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf("Employé", "Manager", "Admin RH").forEach { r ->
+                                    val active = role == r
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(
+                                                if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.Transparent,
+                                                RoundedCornerShape(14.dp)
+                                            )
+                                            .clickable { viewModel.registerRoleText.value = r }
+                                            .padding(vertical = 12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = r,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Department Selector
+                    item {
+                        Column {
+                            Text(
+                                text = "Département",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf("R&D", "Design", "Service RH", "Sales").forEach { dept ->
+                                    val active = department == dept
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(
+                                                if (active) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.25f) else Color.Transparent,
+                                                RoundedCornerShape(12.dp)
+                                            )
+                                            .clickable { viewModel.registerDepartmentText.value = dept }
+                                            .padding(vertical = 10.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = dept,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Password Input
+                    item {
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { viewModel.registerPasswordText.value = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("register_password_input"),
+                            label = { Text("Mot de passe") },
+                            placeholder = { Text("••••••••") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            leadingIcon = {
+                                Icon(Icons.Default.Lock, contentDescription = "Mot de passe", tint = MaterialTheme.colorScheme.primary)
+                            },
+                            trailingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .clickable { passwordVisible = !passwordVisible }
+                                        .padding(8.dp)
+                                ) {
+                                    Text(
+                                        text = if (passwordVisible) "Masquer" else "Afficher",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.02f),
+                                unfocusedContainerColor = Color.Transparent
+                            )
+                        )
+                    }
+
+                    // Action buttons
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                focusManager.clearFocus()
+                                viewModel.attemptRegister()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp)
+                                .testTag("register_button"),
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            enabled = !isLoading
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Confirmer la création",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(Icons.Default.Check, contentDescription = "Enregistrer", modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        TextButton(
+                            onClick = onBackToLogin,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Retourner à l'écran de connexion",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                 }
             }
         }

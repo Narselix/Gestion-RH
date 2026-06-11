@@ -26,6 +26,17 @@ class HRViewModel(
     val loginError = MutableStateFlow<String?>(null)
     val isLoginLoading = MutableStateFlow(false)
 
+    // Register UI states
+    val registerUsernameText = MutableStateFlow("")
+    val registerPasswordText = MutableStateFlow("")
+    val registerFullNameText = MutableStateFlow("")
+    val registerDepartmentText = MutableStateFlow("R&D")
+    val registerRoleText = MutableStateFlow("Employé")
+    val registerEmailText = MutableStateFlow("")
+    val registerError = MutableStateFlow<String?>(null)
+    val registerSuccess = MutableStateFlow<String?>(null)
+    val isRegisterLoading = MutableStateFlow(false)
+
     // Current session
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
@@ -117,6 +128,62 @@ class HRViewModel(
                 loginError.value = "Identifiants incorrects (ex: thomas / thomas123)"
             }
             isLoginLoading.value = false
+        }
+    }
+
+    // Register logic
+    fun attemptRegister() {
+        val username = registerUsernameText.value.trim().lowercase()
+        val password = registerPasswordText.value.trim()
+        val fullName = registerFullNameText.value.trim()
+        val department = registerDepartmentText.value
+        val role = registerRoleText.value
+        val email = registerEmailText.value.trim()
+
+        if (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || email.isEmpty()) {
+            registerError.value = "Veuillez remplir tous les champs obligatoires (nom, identifiant, e-mail et mot de passe)."
+            return
+        }
+
+        viewModelScope.launch {
+            isRegisterLoading.value = true
+            registerError.value = null
+            registerSuccess.value = null
+
+            val existing = repository.getUserByUsername(username)
+            if (existing != null) {
+                registerError.value = "Ce nom d'utilisateur est déjà pris."
+                isRegisterLoading.value = false
+                return@launch
+            }
+
+            val randomNum = (100..999).random()
+            val employeeId = "EMP-2026-$randomNum"
+            val newUser = User(
+                username = username,
+                passwordHash = password,
+                fullName = fullName,
+                role = role,
+                department = department,
+                email = email,
+                employeeId = employeeId,
+                avatarId = (1..6).random(),
+                leaveBalance = 25.0
+            )
+
+            repository.insertUser(newUser)
+            registerSuccess.value = "Compte créé avec succès ! Connectez-vous avec vos identifiants."
+            loginUsernameText.value = username
+            loginPasswordText.value = password
+            
+            // Clear register fields
+            registerUsernameText.value = ""
+            registerPasswordText.value = ""
+            registerFullNameText.value = ""
+            registerEmailText.value = ""
+            
+            currentScreen.value = "LOGIN"
+            isRegisterLoading.value = false
         }
     }
 
