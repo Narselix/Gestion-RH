@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
+import kotlinx.coroutines.launch
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import com.example.data.entity.LeaveRequest
 import com.example.data.entity.TimeLog
 import com.example.data.entity.User
@@ -94,6 +97,47 @@ fun HRAppContent(
 }
 
 @Composable
+fun AuthBackground() {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        backgroundColor,
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        backgroundColor
+                    )
+                )
+            )
+    ) {
+        // Decorative soft glowing circles
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            
+            // Soft top-left colored glow
+            drawCircle(
+                color = primaryColor.copy(alpha = 0.12f),
+                radius = w * 0.4f,
+                center = Offset(w * 0.1f, h * 0.1f)
+            )
+            
+            // Soft bottom-right glow
+            drawCircle(
+                color = tertiaryColor.copy(alpha = 0.08f),
+                radius = w * 0.35f,
+                center = Offset(w * 0.9f, h * 0.8f)
+            )
+        }
+    }
+}
+
+@Composable
 fun LoginScreen(
     viewModel: HRViewModel,
     onLoginSuccess: () -> Unit
@@ -110,27 +154,7 @@ fun LoginScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Custom premium scandinavian forest image background
-        Image(
-            painter = painterResource(id = R.drawable.img_forest_auth_1781182061794),
-            contentDescription = "Fond d'écran forêt",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Gradient overlay blending beautifully with the active Light/Dark theme color palette
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.65f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.90f)
-                        )
-                    )
-                )
-        )
+        AuthBackground()
 
         Column(
             modifier = Modifier
@@ -139,29 +163,52 @@ fun LoginScreen(
                 .widthIn(max = 450.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Distinct Logo Icon Block as modern floating premium shield
+            // Procedural Canvas vector forest drawing (Removing the lock logo completely)
             Box(
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
-                            )
-                        )
-                    )
-                    .border(1.5.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(28.dp))
-                    .padding(18.dp),
+                    .size(110.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Color(0xFFE8F5E9)) // Soft green background
+                    .border(2.dp, Color(0xFF2E7D32).copy(alpha = 0.5f), RoundedCornerShape(32.dp))
+                    .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "RH Security",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(44.dp)
-                )
+                androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                    val w = size.width
+                    val h = size.height
+
+                    // Left mid green tree
+                    val pathLeft = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(w * 0.35f, h * 0.20f)
+                        lineTo(w * 0.12f, h * 0.68f)
+                        lineTo(w * 0.58f, h * 0.68f)
+                        close()
+                    }
+                    drawPath(pathLeft, color = Color(0xFF2E7D32))
+
+                    // Left trunk
+                    drawRect(
+                        color = Color(0xFF5D4037),
+                        topLeft = Offset(w * 0.31f, h * 0.68f),
+                        size = Size(w * 0.08f, h * 0.15f)
+                    )
+
+                    // Right dark green tree
+                    val pathRight = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(w * 0.65f, h * 0.32f)
+                        lineTo(w * 0.42f, h * 0.76f)
+                        lineTo(w * 0.88f, h * 0.76f)
+                        close()
+                    }
+                    drawPath(pathRight, color = Color(0xFF1B5E20))
+
+                    // Right trunk
+                    drawRect(
+                        color = Color(0xFF5D4037),
+                        topLeft = Offset(w * 0.61f, h * 0.76f),
+                        size = Size(w * 0.08f, h * 0.15f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -288,7 +335,7 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp),
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = "Lock Icon", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Default.Key, contentDescription = "Key Icon", tint = MaterialTheme.colorScheme.primary)
                         },
                         trailingIcon = {
                             Box(
@@ -453,6 +500,7 @@ fun LoginScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     viewModel: HRViewModel,
@@ -461,142 +509,376 @@ fun MainScreen(
     onThemeToggle: () -> Unit
 ) {
     val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    
+    // Dialog states
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showDeptsDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            NavigationBar(
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = currentTab == "DASHBOARD",
-                    onClick = { viewModel.currentTab.value = "DASHBOARD" },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard Icon") },
-                    label = { Text("Tableau", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-                NavigationBarItem(
-                    selected = currentTab == "CLOCKS",
-                    onClick = { viewModel.currentTab.value = "CLOCKS" },
-                    icon = { Icon(Icons.Default.Refresh, contentDescription = "Time Tracking Icon") },
-                    label = { Text("Temps", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-                NavigationBarItem(
-                    selected = currentTab == "LEAVES",
-                    onClick = { viewModel.currentTab.value = "LEAVES" },
-                    icon = { Icon(Icons.Default.List, contentDescription = "Leaves Icon") },
-                    label = { Text("Congés", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-                NavigationBarItem(
-                    selected = currentTab == "PROFILE",
-                    onClick = { viewModel.currentTab.value = "PROFILE" },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile Icon") },
-                    label = { Text("Profil", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
-                )
-            }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            // Elegant Local Header Bar
-            val frenchToday = remember {
-                try {
-                    SimpleDateFormat("EEEE d MMMM", Locale.FRENCH).format(Date()).uppercase()
-                } catch (e: Exception) {
-                    "LUNDI 8 JUIN"
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = frenchToday,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = "Bonjour, ${user.fullName.substringBefore(" ")}",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ThemeToggleButton(darkTheme = darkTheme, onThemeToggle = onThemeToggle)
-                    IconButton(onClick = { viewModel.logout() }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Se déconnecter",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(modifier = Modifier.height(16.dp))
+                // User info header
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(64.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFD0E4FF))
-                            .border(2.dp, Color.White, CircleShape),
+                            .background(BlueNavy),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = user.fullName.take(2).uppercase(),
-                            fontSize = 14.sp,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF004A77)
+                            fontSize = 18.sp
                         )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = user.fullName,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = BlueNavy
+                    )
+                    Text(
+                        text = "${user.role} • ${user.department}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Drawer items
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+                    label = { Text("Tableau de bord") },
+                    selected = currentTab == "DASHBOARD",
+                    onClick = {
+                        viewModel.currentTab.value = "DASHBOARD"
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+                    label = { Text("Suivi de Temps / Clocks") },
+                    selected = currentTab == "CLOCKS",
+                    onClick = {
+                        viewModel.currentTab.value = "CLOCKS"
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.List, contentDescription = null) },
+                    label = { Text("Gestion des Congés") },
+                    selected = currentTab == "LEAVES",
+                    onClick = {
+                        viewModel.currentTab.value = "LEAVES"
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    label = { Text("Mon Profil Personnel") },
+                    selected = currentTab == "PROFILE",
+                    onClick = {
+                        viewModel.currentTab.value = "PROFILE"
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Settings, Departments, Export
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Business, contentDescription = null) },
+                    label = { Text("Gérer les Départements") },
+                    selected = false,
+                    onClick = {
+                        showDeptsDialog = true
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text("Options & Thèmes") },
+                    selected = false,
+                    onClick = {
+                        showSettingsDialog = true
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                    label = { Text("Exporter les Données (CSV/JSON)") },
+                    selected = false,
+                    onClick = {
+                        showExportDialog = true
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // Theme Mode Inline Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onThemeToggle() }
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(if (darkTheme) Icons.Default.DarkMode else Icons.Default.LightMode, contentDescription = null)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(if (darkTheme) "Mode Sombre" else "Mode Clair")
+                    }
+                    Switch(checked = darkTheme, onCheckedChange = { onThemeToggle() })
+                }
+
+                // Logout
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                    label = { Text("Se déconnecter", color = MaterialTheme.colorScheme.error) },
+                    selected = false,
+                    onClick = {
+                        viewModel.logout()
+                        scope.launch { drawerState.close() }
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = when(currentTab) {
+                                "DASHBOARD" -> "Tableau de bord"
+                                "EMPLOYEES" -> "Annuaire Collaborateurs"
+                                "RECRUITMENT" -> "Recrutement & Talents"
+                                "TRAINING" -> "Catalogue Formation"
+                                "PAYROLL" -> "Historique Paye"
+                                "CLOCKS" -> "Suivi de Présence"
+                                "LEAVES" -> "Mes Congés"
+                                else -> "Profil Utilisateur"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            color = BlueNavy,
+                            fontSize = 18.sp
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Ouvrir Menu", tint = BlueNavy)
+                        }
+                    },
+                    actions = {
+                        ThemeToggleButton(darkTheme = darkTheme, onThemeToggle = onThemeToggle)
+                        IconButton(onClick = { viewModel.logout() }) {
+                            Icon(Icons.Default.ExitToApp, "Se déconnecter", tint = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                )
+            },
+            bottomBar = {
+                NavigationBar(
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp
+                ) {
+                    NavigationBarItem(
+                        selected = currentTab == "DASHBOARD",
+                        onClick = { viewModel.currentTab.value = "DASHBOARD" },
+                        icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
+                        label = { Text("Tableau", fontSize = 10.sp, maxLines = 1) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueNavy,
+                            indicatorColor = BlueNavy.copy(alpha = 0.15f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = currentTab == "EMPLOYEES",
+                        onClick = { viewModel.currentTab.value = "EMPLOYEES" },
+                        icon = { Icon(Icons.Default.People, contentDescription = "Employees") },
+                        label = { Text("Annuaire", fontSize = 10.sp, maxLines = 1) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueNavy,
+                            indicatorColor = BlueNavy.copy(alpha = 0.15f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = currentTab == "RECRUITMENT",
+                        onClick = { viewModel.currentTab.value = "RECRUITMENT" },
+                        icon = { Icon(Icons.Default.Work, contentDescription = "Recruitment") },
+                        label = { Text("Recruter", fontSize = 10.sp, maxLines = 1) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueNavy,
+                            indicatorColor = BlueNavy.copy(alpha = 0.15f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = currentTab == "TRAINING",
+                        onClick = { viewModel.currentTab.value = "TRAINING" },
+                        icon = { Icon(Icons.Default.School, contentDescription = "Training") },
+                        label = { Text("Formation", fontSize = 10.sp, maxLines = 1) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueNavy,
+                            indicatorColor = BlueNavy.copy(alpha = 0.15f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = currentTab == "PAYROLL",
+                        onClick = { viewModel.currentTab.value = "PAYROLL" },
+                        icon = { Icon(Icons.Default.Payments, contentDescription = "Payroll") },
+                        label = { Text("Paie", fontSize = 10.sp, maxLines = 1) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = BlueNavy,
+                            indicatorColor = BlueNavy.copy(alpha = 0.15f)
+                        )
+                    )
+                }
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                // Tab navigation switching
+                AnimatedContent(
+                    targetState = currentTab,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                    label = "TabContent"
+                ) { tab ->
+                    when (tab) {
+                        "DASHBOARD" -> DashboardScreen(viewModel = viewModel)
+                        "EMPLOYEES" -> EmployeeDirectoryScreen(viewModel = viewModel)
+                        "RECRUITMENT" -> RecrutementScreen(viewModel = viewModel)
+                        "TRAINING" -> FormationScreen(viewModel = viewModel)
+                        "PAYROLL" -> PaieScreen(viewModel = viewModel)
+                        "CLOCKS" -> TimeTrackingTab(viewModel = viewModel, user = user)
+                        "LEAVES" -> LeavesTab(viewModel = viewModel, user = user)
+                        "PROFILE" -> ProfileTab(viewModel = viewModel, user = user)
                     }
                 }
             }
+        }
+    }
 
-            // Tab navigation switching
-            AnimatedContent(
-                targetState = currentTab,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                label = "TabContent"
-            ) { tab ->
-                when (tab) {
-                    "DASHBOARD" -> DashboardTab(viewModel = viewModel, user = user)
-                    "CLOCKS" -> TimeTrackingTab(viewModel = viewModel, user = user)
-                    "LEAVES" -> LeavesTab(viewModel = viewModel, user = user)
-                    "PROFILE" -> ProfileTab(viewModel = viewModel, user = user)
+    // EXPORT DIALOG
+    if (showExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text("Export des Données SGBD", fontWeight = FontWeight.Bold, color = BlueNavy) },
+            text = { Text("Voulez-vous sérialiser et exporter la base de données Room globale vers les formats de rapport d'échange normalisés (CSV d'effectifs & JSON de synthèse d'audit) ?") },
+            confirmButton = {
+                Button(
+                    onClick = { showExportDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = BlueNavy)
+                ) {
+                    Text("Oui, Exporter")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExportDialog = false }) {
+                    Text("Annuler")
                 }
             }
-        }
+        )
+    }
+
+    // SETTINGS DIALOG
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = { Text("Options Globales & Thèmes", fontWeight = FontWeight.Bold, color = BlueNavy) },
+            text = {
+                Column {
+                    Text("Ajustez les options de comportement du tableau de bord.", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        Text("Activer notifications d'alertes", fontSize = 12.sp)
+                        var checked by remember { mutableStateOf(true) }
+                        Switch(checked = checked, onCheckedChange = { checked = it })
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        Text("Rafraîchissement automatique", fontSize = 12.sp)
+                        var checked by remember { mutableStateOf(true) }
+                        Switch(checked = checked, onCheckedChange = { checked = it })
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showSettingsDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = BlueNavy)
+                ) {
+                    Text("Enregistrer")
+                }
+            }
+        )
+    }
+
+    // DEPARTMENTS DIALOG
+    if (showDeptsDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeptsDialog = false },
+            title = { Text("Gestion des Départements", fontWeight = FontWeight.Bold, color = BlueNavy) },
+            text = {
+                Column {
+                    Text("Départements administratifs enregistrés :", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    listOf("R&D", "Service RH", "Design", "Marketing").forEach { d ->
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Business, null, tint = BlueNavy, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(d, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDeptsDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = BlueNavy)
+                ) {
+                    Text("Fermer")
+                }
+            }
+        )
     }
 }
 
@@ -2048,27 +2330,7 @@ fun RegisterScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Custom premium scandinavian forest image background
-        Image(
-            painter = painterResource(id = R.drawable.img_forest_auth_1781182061794),
-            contentDescription = "Fond d'écran forêt",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Gradient overlay blending beautifully with the active Light/Dark theme color palette
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.65f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.90f)
-                        )
-                    )
-                )
-        )
+        AuthBackground()
 
         Column(
             modifier = Modifier
@@ -2345,7 +2607,7 @@ fun RegisterScreen(
                             shape = RoundedCornerShape(16.dp),
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             leadingIcon = {
-                                Icon(Icons.Default.Lock, contentDescription = "Mot de passe", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.Key, contentDescription = "Mot de passe", tint = MaterialTheme.colorScheme.primary)
                             },
                             trailingIcon = {
                                 Box(

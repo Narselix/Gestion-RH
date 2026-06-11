@@ -6,9 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.database.AppDatabase
-import com.example.data.entity.LeaveRequest
-import com.example.data.entity.TimeLog
-import com.example.data.entity.User
+import com.example.data.entity.*
 import com.example.data.repository.HRRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -98,7 +96,11 @@ class HRViewModel(
     init {
         // Seed and prepare database in background
         viewModelScope.launch {
-            repository.checkAndSeedDatabase()
+            try {
+                repository.checkAndSeedDatabase()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -115,19 +117,24 @@ class HRViewModel(
         viewModelScope.launch {
             isLoginLoading.value = true
             loginError.value = null
-            
-            val user = repository.getUserByUsername(username)
-            if (user != null && user.passwordHash == password) {
-                _currentUser.value = user
-                currentScreen.value = "MAIN"
-                currentTab.value = "DASHBOARD"
-                // Clear fields
-                loginUsernameText.value = ""
-                loginPasswordText.value = ""
-            } else {
-                loginError.value = "Identifiants incorrects (ex: thomas / thomas123)"
+            try {
+                val user = repository.getUserByUsername(username)
+                if (user != null && user.passwordHash == password) {
+                    _currentUser.value = user
+                    currentScreen.value = "MAIN"
+                    currentTab.value = "DASHBOARD"
+                    // Clear fields
+                    loginUsernameText.value = ""
+                    loginPasswordText.value = ""
+                } else {
+                    loginError.value = "Identifiants incorrects (ex: thomas / thomas123)"
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                loginError.value = "Erreur de connexion : ${e.localizedMessage ?: e.message}"
+            } finally {
+                isLoginLoading.value = false
             }
-            isLoginLoading.value = false
         }
     }
 
@@ -390,6 +397,401 @@ class HRViewModel(
         return SimpleDateFormat("dd MMM, yyyy 'à' HH:mm", Locale.getDefault()).format(Date(timestamp))
     }
 
+    // --- NEW MODULE STATES AND FLOWS ---
+
+    val allTrainings = repository.getAllTrainings().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allSessions = repository.getAllSessions().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allEnrollments = repository.getAllEnrollments().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allPayslips = repository.getAllPayslips().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allJobOffers = repository.getAllJobOffers().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allCandidates = repository.getAllCandidates().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allInterviews = repository.getAllInterviews().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allSkills = repository.getAllSkills().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    val allDocuments = repository.getAllDocuments().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+    )
+
+    // Form inputs: Training
+    val trainingTitle = MutableStateFlow("")
+    val trainingCategory = MutableStateFlow("Technique")
+    val trainingDesc = MutableStateFlow("")
+    val trainingDept = MutableStateFlow("R&D")
+    val trainingDuration = MutableStateFlow("21")
+    val trainingCost = MutableStateFlow("1500")
+
+    val sessionDate = MutableStateFlow("")
+    val sessionLocation = MutableStateFlow("En ligne")
+    val sessionTrainer = MutableStateFlow("")
+    val sessionCapacity = MutableStateFlow("15")
+
+    // Form inputs: Payroll
+    val payslipBaseSalaryInput = MutableStateFlow("3500")
+    val payslipOvertimeInput = MutableStateFlow("4.0")
+    val payslipPrimesInput = MutableStateFlow("250")
+    val payslipDeductionsInput = MutableStateFlow("850")
+
+    // Form inputs: Recruitment
+    val jobTitle = MutableStateFlow("")
+    val jobDept = MutableStateFlow("R&D")
+    val jobContract = MutableStateFlow("CDI")
+    val jobLocationInput = MutableStateFlow("Paris / Télé")
+    val jobDescription = MutableStateFlow("")
+    val jobHeadcount = MutableStateFlow("1")
+
+    val candidateName = MutableStateFlow("")
+    val candidateEmail = MutableStateFlow("")
+    val candidatePhone = MutableStateFlow("")
+    val candidateSource = MutableStateFlow("LinkedIn")
+    val candidateResume = MutableStateFlow("")
+
+    val interviewDateString = MutableStateFlow("")
+    val interviewInterviewer = MutableStateFlow("")
+    val interviewType = MutableStateFlow("Visio")
+    val interviewNotes = MutableStateFlow("")
+
+    // Form inputs: Skills and Documents
+    val skillName = MutableStateFlow("")
+    val skillLevel = MutableStateFlow("Intermédiaire")
+    val skillCert = MutableStateFlow("")
+
+    val docNameInput = MutableStateFlow("")
+    val docTypeInput = MutableStateFlow("CONTRAT")
+    val docFileName = MutableStateFlow("")
+    val docExpiryInput = MutableStateFlow("")
+
+
+    // --- ACTIONS: TRAINING ---
+
+    fun createTrainingCourse() {
+        val title = trainingTitle.value.trim()
+        val cat = trainingCategory.value
+        val desc = trainingDesc.value.trim()
+        val dept = trainingDept.value
+        val duration = trainingDuration.value.toIntOrNull() ?: 10
+        val cost = trainingCost.value.toDoubleOrNull() ?: 500.0
+
+        if (title.isEmpty() || desc.isEmpty()) return
+
+        viewModelScope.launch {
+            repository.insertTraining(
+                Training(
+                    title = title,
+                    category = cat,
+                    description = desc,
+                    department = dept,
+                    durationHrs = duration,
+                    cost = cost
+                )
+            )
+            trainingTitle.value = ""
+            trainingDesc.value = ""
+        }
+    }
+
+    fun createTrainingSession(trainingId: Int, trainingTitleStr: String) {
+        val date = sessionDate.value.trim()
+        val loc = sessionLocation.value.trim()
+        val trainer = sessionTrainer.value.trim()
+        val cap = sessionCapacity.value.toIntOrNull() ?: 10
+
+        if (date.isEmpty() || trainer.isEmpty()) return
+
+        viewModelScope.launch {
+            repository.insertSession(
+                TrainingSession(
+                    trainingId = trainingId,
+                    trainingTitle = trainingTitleStr,
+                    dateString = date,
+                    location = loc,
+                    trainer = trainer,
+                    capacity = cap,
+                    status = "Planifiée"
+                )
+            )
+            sessionDate.value = ""
+            sessionTrainer.value = ""
+        }
+    }
+
+    fun enrollUserInTraining(sessionId: Int, userId: Int, empName: String) {
+        viewModelScope.launch {
+            repository.insertEnrollment(
+                TrainingEnrollment(
+                    sessionId = sessionId,
+                    userId = userId,
+                    employeeName = empName,
+                    status = "Inscrit"
+                )
+            )
+        }
+    }
+
+    fun completeEnrollment(enrollment: TrainingEnrollment, present: Boolean, score: Int, comment: String) {
+        viewModelScope.launch {
+            val updated = enrollment.copy(
+                status = if (present) "Présent" else "Absent",
+                evaluationScore = score,
+                feedbackComment = comment,
+                certificateIssued = present
+            )
+            repository.updateEnrollment(updated)
+        }
+    }
+
+    fun updateSessionStatus(session: TrainingSession, newStatus: String) {
+        viewModelScope.launch {
+            repository.updateSession(session.copy(status = newStatus))
+        }
+    }
+
+
+    // --- ACTIONS: PAYROLL ---
+
+    fun calculateAndSavePayslip(userId: Int, empName: String, dept: String, month: String) {
+        val base = payslipBaseSalaryInput.value.toDoubleOrNull() ?: 3000.0
+        val overHours = payslipOvertimeInput.value.toDoubleOrNull() ?: 0.0
+        val extraPay = overHours * 35.0 // Flat rate per overtime hour
+        val primes = payslipPrimesInput.value.toDoubleOrNull() ?: 0.0
+        val deductions = payslipDeductionsInput.value.toDoubleOrNull() ?: 750.0
+        val net = (base + extraPay + primes) - deductions
+
+        viewModelScope.launch {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val dateStr = sdf.format(Date())
+
+            repository.insertPayslip(
+                Payslip(
+                    userId = userId,
+                    employeeName = empName,
+                    department = dept,
+                    monthString = month,
+                    baseSalary = base,
+                    overtimeHours = overHours,
+                    overtimePay = extraPay,
+                    primes = primes,
+                    deductions = deductions,
+                    netSalary = net,
+                    status = "Brouillon",
+                    dateIssued = dateStr
+                )
+            )
+        }
+    }
+
+    fun validatePayslip(payslip: Payslip) {
+        viewModelScope.launch {
+            repository.updatePayslip(payslip.copy(status = "Validé"))
+        }
+    }
+
+    fun payPayslip(payslip: Payslip) {
+        viewModelScope.launch {
+            repository.updatePayslip(payslip.copy(status = "Payé"))
+        }
+    }
+
+
+    // --- ACTIONS: RECRUITMENT ---
+
+    fun publishJobOffer() {
+        val title = jobTitle.value.trim()
+        val dept = jobDept.value
+        val contract = jobContract.value
+        val loc = jobLocationInput.value.trim()
+        val desc = jobDescription.value.trim()
+        val hc = jobHeadcount.value.toIntOrNull() ?: 1
+
+        if (title.isEmpty() || desc.isEmpty()) return
+
+        viewModelScope.launch {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            repository.insertJobOffer(
+                JobOffer(
+                    title = title,
+                    department = dept,
+                    contractType = contract,
+                    location = loc,
+                    description = desc,
+                    headcount = hc,
+                    status = "Active",
+                    datePosted = sdf.format(Date())
+                )
+            )
+            jobTitle.value = ""
+            jobDescription.value = ""
+        }
+    }
+
+    fun registerCandidate(jobOfferId: Int, offerTitle: String) {
+        val name = candidateName.value.trim()
+        val email = candidateEmail.value.trim()
+        val phone = candidatePhone.value.trim()
+        val source = candidateSource.value
+        val resume = candidateResume.value.trim().takeIf { it.isNotEmpty() } ?: "CV_$name.pdf"
+
+        if (name.isEmpty() || email.isEmpty()) return
+
+        viewModelScope.launch {
+            repository.insertCandidate(
+                Candidate(
+                    jobOfferId = jobOfferId,
+                    jobTitle = offerTitle,
+                    fullName = name,
+                    email = email,
+                    phone = phone,
+                    currentStatus = "Reçue",
+                    resumeName = resume,
+                    coverLetter = "",
+                    score = (50..95).random(), // Seed a neat dynamic profile rating
+                    source = source
+                )
+            )
+            candidateName.value = ""
+            candidateEmail.value = ""
+            candidatePhone.value = ""
+        }
+    }
+
+    fun promoteCandidateStatus(candidate: Candidate, nextStatus: String) {
+        viewModelScope.launch {
+            val updated = candidate.copy(currentStatus = nextStatus)
+            repository.updateCandidate(updated)
+            
+            // If they are hired (Acceptée), let's onboard them as a new User in the DB!
+            if (nextStatus == "Acceptée") {
+                val exist = repository.getUserByUsername(candidate.fullName.replace(" ", "").lowercase())
+                if (exist == null) {
+                    val initialUsername = candidate.fullName.replace(" ", "").lowercase().take(8)
+                    val randomId = (100..999).random()
+                    val newEmployee = User(
+                        username = initialUsername,
+                        passwordHash = "${initialUsername}123",
+                        fullName = candidate.fullName,
+                        role = "Employé",
+                        department = "R&D", // Default
+                        email = candidate.email,
+                        employeeId = "EMP-2026-$randomId",
+                        joiningDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                        contractType = "CDI",
+                        leaveBalance = 25.0
+                    )
+                    repository.insertUser(newEmployee)
+                }
+            }
+        }
+    }
+
+    fun scheduleInterview(candidateId: Int, candName: String, offerTitle: String) {
+        val date = interviewDateString.value.trim()
+        val iw = interviewInterviewer.value.trim()
+        val type = interviewType.value
+        val notes = interviewNotes.value.trim()
+
+        if (date.isEmpty() || iw.isEmpty()) return
+
+        viewModelScope.launch {
+            repository.insertInterview(
+                Interview(
+                    candidateId = candidateId,
+                    candidateName = candName,
+                    jobTitle = offerTitle,
+                    dateString = date,
+                    interviewer = iw,
+                    type = type,
+                    status = "Planifié",
+                    notes = notes
+                )
+            )
+            // Auto promote candidate status to "Entretien"
+            val candidates = repository.getAllCandidates().firstOrNull() ?: emptyList()
+            val candidate = candidates.find { it.id == candidateId }
+            if (candidate != null && candidate.currentStatus == "Reçue") {
+                repository.updateCandidate(candidate.copy(currentStatus = "Entretien"))
+            }
+
+            interviewDateString.value = ""
+            interviewInterviewer.value = ""
+            interviewNotes.value = ""
+        }
+    }
+
+
+    // --- ACTIONS: STAFF COLLABORATION (Skills and Doc uploads) ---
+
+    fun appendSkill(userId: Int, empName: String) {
+        val name = skillName.value.trim()
+        val lvl = skillLevel.value
+        val cert = skillCert.value.trim()
+
+        if (name.isEmpty()) return
+
+        viewModelScope.launch {
+            repository.insertSkill(
+                Skill(
+                    userId = userId,
+                    employeeName = empName,
+                    name = name,
+                    level = lvl,
+                    certificationName = cert,
+                    dateAcquired = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                )
+            )
+            skillName.value = ""
+            skillCert.value = ""
+        }
+    }
+
+    fun uploadDoc(userId: Int) {
+        val name = docNameInput.value.trim()
+        val type = docTypeInput.value
+        val file = docFileName.value.trim().takeIf { it.isNotEmpty() } ?: "$name.pdf"
+        val expiry = docExpiryInput.value.trim()
+
+        if (name.isEmpty()) return
+
+        viewModelScope.launch {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            repository.insertDocument(
+                EmployeeDoc(
+                    userId = userId,
+                    name = name,
+                    docType = type,
+                    fileName = file,
+                    uploadDate = sdf.format(Date()),
+                    status = "Valide",
+                    expiryDate = expiry
+                )
+            )
+            docNameInput.value = ""
+            docExpiryInput.value = ""
+        }
+    }
+
+
     // Helper factory
     class Factory(private val application: Application) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -398,7 +800,11 @@ class HRViewModel(
             val repository = HRRepository(
                 database.userDao(),
                 database.timeLogDao(),
-                database.leaveRequestDao()
+                database.leaveRequestDao(),
+                database.trainingDao(),
+                database.payslipDao(),
+                database.recruitmentDao(),
+                database.collaborationDao()
             )
             return HRViewModel(application, repository) as T
         }
